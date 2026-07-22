@@ -1,1 +1,2 @@
 qalem/src-tauri/target/
+Add-Content .gitignore "`nQalemProjects/"
