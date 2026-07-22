@@ -1,0 +1,900 @@
+/* Workspace process sidebar — projects with nested agents/terminals/commands. */
+
+.workspace-sidebar {
+  display: flex;
+  flex-direction: column;
+  width: 240px;
+  flex-shrink: 0;
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border);
+  min-height: 0;
+  overflow: hidden;
+  font-size: var(--font-size-base);
+  color: var(--text-primary);
+}
+
+/* Every descendant uses border-box so `width: 100%` + padding never
+ * overflows. Without this, rows that set width: 100% with padding
+ * pushed a few pixels past the 240px sidebar and forced a horizontal
+ * scrollbar. */
+.workspace-sidebar,
+.workspace-sidebar *,
+.workspace-sidebar *::before,
+.workspace-sidebar *::after {
+  box-sizing: border-box;
+}
+
+/* Override global `button { border-radius }` — sidebar is flat/square throughout. */
+.workspace-sidebar button {
+  border-radius: 0;
+}
+
+/*
+ * On the home/projects view there's no workspace titlebar above the sidebar,
+ * so the sidebar runs to y=0 — right under the macOS traffic lights (overlay
+ * mode). Reserve the titlebar height at the top so Home doesn't collide.
+ */
+.projects-with-rail .workspace-sidebar {
+  padding-top: 32px;
+}
+
+/* Top row — wraps the Home button and workspace switcher dot side-by-side.
+ * The row owns the border-bottom so neither child duplicates it. */
+.workspace-sidebar-top-row {
+  display: flex;
+  align-items: stretch;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+/* Home row — height matches the workspace header band so the sidebar's top
+ * lines up with it: the header is a 28px toolbar control + 8px top/bottom
+ * padding = 44px, and the top row adds its own 1px bottom border. */
+.workspace-sidebar-home {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  height: 44px;
+  padding: 0 var(--spacing-md);
+  background: var(--bg-secondary);
+  border: none;
+  border-bottom: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  text-align: left;
+  flex: 1;
+  border-left: 2px solid transparent;
+  transition: background var(--transition-fast);
+}
+
+.workspace-sidebar-home:hover {
+  background: var(--bg-tertiary);
+}
+
+.workspace-sidebar-home.is-active {
+  background: var(--bg-tertiary);
+  border-left-color: var(--text-primary);
+}
+
+.workspace-sidebar-home-icon {
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+
+.workspace-sidebar-home.is-active .workspace-sidebar-home-icon {
+  background: var(--action);
+  color: var(--action-text);
+}
+
+/* Sidebar-top palette trigger — button styled like a search input. The
+ * real search happens inside the Cmd+K palette; clicking opens it. */
+.workspace-sidebar-filter {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  width: 100%;
+  height: 48px;
+  padding: 0 var(--spacing-md);
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-muted);
+  flex-shrink: 0;
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--font-size-base);
+  text-align: left;
+  transition: background-color var(--transition-fast);
+}
+
+.workspace-sidebar-filter:hover {
+  background: var(--bg-tertiary);
+}
+
+.workspace-sidebar-filter-placeholder {
+  flex: 1;
+  color: var(--text-muted);
+}
+
+.workspace-sidebar-filter-shortcut {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 5px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+  line-height: 1;
+  letter-spacing: 0.3px;
+}
+
+.workspace-sidebar-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding: 0 0 var(--spacing-md);
+  /* Plain block layout. Every child takes a full line. */
+  display: block !important;
+  /* Hide the scrollbar visually while keeping the container scrollable.
+   * Production builds (Tauri WKWebView) would otherwise render a default
+   * light grey scrollbar that clashes with the dark sidebar. Firefox gets
+   * `scrollbar-width: none`; WebKit gets the pseudo-element rule below. */
+  scrollbar-width: none;
+}
+
+.workspace-sidebar-scroll > * {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  float: none !important;
+  clear: both !important;
+  position: static !important;
+}
+
+/* Belt-and-suspenders: block out flex/grid/inline on every sidebar
+ * descendant that isn't one of the known flex-row children. */
+.workspace-sidebar-scroll .sidebar-project,
+.workspace-sidebar-scroll .sidebar-project-body,
+.workspace-sidebar-scroll .sidebar-project-body-inner,
+.workspace-sidebar-scroll .sidebar-project-inactive,
+.workspace-sidebar-scroll .sidebar-group-empty,
+.workspace-sidebar-scroll .sidebar-section {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  float: none !important;
+}
+
+.workspace-sidebar-scroll::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+/* Top-level groups: Pinned / Projects.
+ *
+ * The `display: flex !important` beats the `.workspace-sidebar-scroll > *`
+ * block rule above — without it the button falls back to inline children
+ * (chevron, label, count glued together as `∨ACTIVE1`).
+ */
+.sidebar-group-header {
+  display: flex !important;
+  align-items: center;
+  gap: var(--spacing-sm);
+  width: 100%;
+  height: 32px;
+  padding: 0 var(--spacing-md);
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: left;
+}
+
+.sidebar-group-header:hover {
+  color: var(--text-secondary);
+}
+
+.sidebar-group-header svg {
+  flex-shrink: 0;
+  transition: transform var(--transition-fast);
+}
+
+.sidebar-group-label {
+  flex: 1;
+  min-width: 0;
+}
+
+.sidebar-group-count {
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.sidebar-group-empty {
+  padding: var(--spacing-xs) var(--spacing-md) var(--spacing-sm) 30px;
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+}
+
+/* Projects (top-level groups). No vertical padding — we want the row to
+ * sit flush against the dividers above and below so the separator line
+ * reads as the only breathing room between adjacent projects. */
+.sidebar-project {
+  padding: 0;
+  border-bottom: 1px solid var(--border);
+}
+
+/* Suppress the divider on the last project in a group so we don't stack
+ * a line directly above a different group's header (which already draws
+ * its own separator visually via the uppercase label). */
+.sidebar-project:last-child {
+  border-bottom: none;
+}
+
+.sidebar-project-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  width: 100%;
+  height: 32px;
+  padding: 0 var(--spacing-md) 0 0;
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  border-left: 2px solid transparent;
+  transition: background var(--transition-fast);
+}
+
+.sidebar-project-row:focus-visible {
+  outline: none;
+  background: var(--bg-tertiary);
+}
+
+/* Dedicated chevron hit-target so clicking it toggles without switching. */
+.sidebar-project-chevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 100%;
+  padding: 0;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.sidebar-project-chevron:hover {
+  color: var(--text-primary);
+}
+
+.sidebar-project-chevron svg {
+  transition: transform var(--transition-fast);
+}
+
+.sidebar-project-row:hover {
+  background: var(--bg-tertiary);
+}
+
+.sidebar-project.is-current > .sidebar-project-row {
+  border-left-color: var(--text-primary);
+  background: transparent;
+  cursor: default;
+}
+
+.sidebar-project.is-current > .sidebar-project-row:hover {
+  background: transparent;
+}
+
+.sidebar-project-initials {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+
+.sidebar-project.is-current .sidebar-project-initials {
+  background: var(--action);
+  color: var(--action-text);
+}
+
+.sidebar-project-name {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-project-meta {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+/* When the row has a Cmd+N shortcut, the initials slot shows the shortcut
+ * instead. Matches the ⌘K badge sizing on the dashboard search trigger. */
+.sidebar-project-initials.is-shortcut {
+  font-family: inherit;
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  color: var(--text-secondary);
+}
+
+.sidebar-project-body {
+  padding: 2px 0 var(--spacing-sm);
+}
+
+/* Per-row close button — appears on hover. Rendered LEFT of the status
+ * dot so the rightmost element stays as the always-visible state
+ * indicator. Hover-only to keep rows calm at rest. */
+.sidebar-project-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  opacity: 0;
+  transition:
+    opacity var(--transition-fast),
+    color var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.sidebar-project-row:hover .sidebar-project-close,
+.sidebar-project-close:focus-visible {
+  opacity: 1;
+}
+
+.sidebar-project-close:hover {
+  color: var(--text-primary);
+}
+
+/* Placeholder for non-current expanded projects (pre-Slice 2 / 3). */
+.sidebar-project-inactive {
+  padding: var(--spacing-xs) var(--spacing-md) var(--spacing-sm) 44px;
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+}
+
+.sidebar-project-inactive p {
+  margin: 0;
+}
+
+/* Sections within a project */
+.sidebar-section {
+  padding: var(--spacing-xs) 0;
+}
+
+.sidebar-section-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: 0 var(--spacing-md) 0 28px;
+  height: 22px;
+  color: var(--text-muted);
+  user-select: none;
+}
+
+.sidebar-section-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: none;
+  padding: 0;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.sidebar-section-toggle:hover {
+  color: var(--text-secondary);
+}
+
+.sidebar-section-toggle svg,
+.sidebar-project-row svg {
+  transition: transform var(--transition-fast);
+}
+
+.chevron-collapsed {
+  transform: rotate(-90deg);
+}
+
+.chevron-expanded {
+  transform: rotate(0deg);
+}
+
+.sidebar-section-label {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-section-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  flex-shrink: 0;
+  position: relative;
+}
+
+.sidebar-section-count {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.sidebar-section-add {
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: var(--font-size-lg);
+  line-height: 1;
+  padding: 0;
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.sidebar-section-add:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+/* Keyboard-shortcut hint rendered next to the "+" button. */
+.sidebar-section-shortcut {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 4px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: var(--font-size-xs);
+  font-weight: normal;
+  line-height: 1;
+  letter-spacing: 0.3px;
+}
+
+/* Agent picker popover */
+.sidebar-section-picker {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  min-width: 140px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  z-index: var(--z-dropdown);
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Specificity bumped so this wins over both `.workspace-sidebar button`
+   (sidebar flat-corner reset) and the global `button` border-radius. */
+.sidebar-section-picker .sidebar-section-picker-item {
+  display: flex;
+  align-items: center;
+  padding: 4px 8px;
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  text-align: left;
+  font: inherit;
+  font-size: var(--font-size-base);
+  cursor: pointer;
+}
+
+.sidebar-section-picker .sidebar-section-picker-item:hover {
+  background: var(--bg-secondary);
+}
+
+.sidebar-section-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.sidebar-section-empty {
+  padding: 4px var(--spacing-md) 4px 40px;
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+  font-style: italic;
+}
+
+/* "Add new agent" affordance below the last item in a section.
+   Shown for the Agents section so users who miss the header "+" still
+   have an obvious add target. */
+.sidebar-section-add-footer-row {
+  list-style: none;
+  padding: 4px 10px 6px 32px;
+}
+
+/* Wrapper that turns the footer "+" button + chevron caret into a single
+   visual pill (split button). The picker is portaled to <body> and
+   positioned against this group's bounding rect.
+   When `has-caret` is absent the inner button still renders full-width
+   and rounded, matching the pre-split-button look. */
+.sidebar-section-add-footer-group {
+  display: flex;
+  width: 100%;
+  align-items: stretch;
+}
+
+/* Make the toolbar-icon-btn span the full row width in the sidebar footer.
+   The base class is sized to its content; in this context we want a full
+   stripe under the agent list. */
+.workspace-sidebar button.sidebar-section-add-footer {
+  width: 100%;
+  border-radius: var(--radius);
+}
+
+/* When the group includes the caret (rendered to the *right* of the main
+   button), the main button gives up its right border + corners so the
+   two segments read as one pill. The left corners pick up the base
+   --radius from .toolbar-icon-btn. */
+.sidebar-section-add-footer-group.has-caret button.sidebar-section-add-footer {
+  flex: 1;
+  width: auto;
+  border-top-left-radius: var(--radius);
+  border-bottom-left-radius: var(--radius);
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  border-right: none;
+}
+
+/* Corners are set explicitly because the sidebar-wide
+   `.workspace-sidebar button { border-radius: 0 }` reset (above) zeros
+   the base radius from .toolbar-icon-btn. */
+.workspace-sidebar button.sidebar-section-add-footer-caret {
+  width: 28px;
+  padding: 0;
+  flex: 0 0 auto;
+  border-top-right-radius: var(--radius);
+  border-bottom-right-radius: var(--radius);
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+/* The visible seam between the two segments is the caret's left border
+   (the main button's right border was removed so the pill reads as one).
+   Brighten that seam whenever either half is hovered, otherwise hovering
+   "Add new agent" leaves a stale dim line on its right edge. */
+.sidebar-section-add-footer-group.has-caret:hover button.sidebar-section-add-footer-caret {
+  border-left-color: var(--text-muted);
+}
+
+.workspace-sidebar button.sidebar-section-add-footer-caret.is-open svg {
+  transform: rotate(180deg);
+  transition: transform var(--transition-fast);
+}
+
+/* Footer picker is rendered via a React portal to document.body and
+   positioned with fixed coordinates — overrides the default absolute
+   positioning that would otherwise get clipped by the sidebar's
+   overflow: hidden. */
+.sidebar-section-picker.is-footer {
+  position: fixed;
+  top: auto;
+  bottom: auto;
+  right: auto;
+  left: auto;
+}
+
+/* Rows within a section */
+.sidebar-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  height: 26px;
+  padding: 0 var(--spacing-md) 0 32px;
+  cursor: pointer;
+  border-left: 2px solid transparent;
+  color: var(--text-primary);
+  transition: background var(--transition-fast);
+}
+
+.sidebar-row:hover {
+  background: var(--bg-tertiary);
+}
+
+.sidebar-row:focus-visible {
+  outline: none;
+  background: var(--bg-tertiary);
+}
+
+.sidebar-row.is-active {
+  background: var(--bg-tertiary);
+}
+
+/* Agent/terminal row needs user attention — the label goes green (success)
+ * so a user scanning the sidebar from any project can spot a tab they need
+ * to check. The dot keeps its amber pulse from `.dot-attention` as the
+ * urgency cue; the label color is the "come-look-at-me" affordance.
+ * Scoped to non-active rows because the active row is where the user
+ * already is (attention clears on activate). */
+.sidebar-row.is-attention .sidebar-row-label {
+  color: var(--success-light);
+  font-weight: 600;
+}
+
+.sidebar-row-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+  background: var(--text-muted);
+}
+
+.sidebar-row-dot.dot-idle {
+  background: var(--text-muted);
+}
+
+.sidebar-row-dot.dot-muted {
+  background: var(--border);
+}
+
+.sidebar-row-dot.dot-active {
+  background: var(--success-light);
+  box-shadow: 0 0 0 2px rgba(var(--success-light-rgb), 0.15);
+}
+
+/* Agent is actively thinking — the green dot becomes a small spinning wheel:
+ * a grey track ring with one bright green arc (border-top) chasing around it.
+ * Can't use `transform: scale()` here because the shared `spin` keyframe sets
+ * `transform: rotate()` and would clobber it; instead the ring is 12px but
+ * pulled back with `margin: -3px` so it stays centered on the original 6px
+ * dot and the row label never shifts. */
+.sidebar-row-dot.dot-thinking {
+  width: 12px;
+  height: 12px;
+  margin: -3px;
+  background: transparent;
+  border: 2px solid var(--border);
+  border-top-color: var(--success-light);
+  animation: spin 0.6s linear infinite;
+}
+
+.sidebar-row-dot.dot-attention {
+  background: var(--warning);
+  box-shadow: 0 0 0 2px rgba(var(--warning-rgb), 0.2);
+  animation: sidebar-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes sidebar-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.sidebar-row-label {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--font-size-base);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  /* Suppress the browser-default text selection on double-click — the
+     selection flashes for one frame before the rename input mounts. */
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Inline rename input that replaces the label while editing. Sized to fill
+   the same flex slot so the row layout doesn't jump. */
+.sidebar-row-rename {
+  flex: 1;
+  min-width: 0;
+  padding: 1px 4px;
+  margin: 0;
+  font-size: var(--font-size-base);
+  font: inherit;
+  color: var(--text-primary);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.sidebar-row-meta {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.sidebar-row-close {
+  width: 16px;
+  height: 16px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: var(--font-size-lg);
+  line-height: 1;
+  padding: 0;
+  border-radius: var(--radius-sm);
+}
+
+.sidebar-row:hover .sidebar-row-close,
+.sidebar-row:focus-within .sidebar-row-close {
+  display: flex;
+}
+
+.sidebar-row-close:hover {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+/* Inline action button (e.g. restart dev server). Unlike the close
+   button, this stays visible so users can discover the action without
+   hovering, but dims until the row is hovered/focused. No bg change on
+   hover — just the icon going fully white. */
+.sidebar-row-action {
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0;
+  border-radius: var(--radius-sm);
+  opacity: 0.55;
+  transition:
+    opacity var(--transition),
+    color var(--transition);
+  flex-shrink: 0;
+}
+
+.sidebar-row:hover .sidebar-row-action,
+.sidebar-row:focus-within .sidebar-row-action,
+.sidebar-row-action:focus-visible {
+  opacity: 1;
+}
+
+.sidebar-row-action:hover:not(:disabled) {
+  background: none;
+  color: var(--text-bright);
+}
+
+.sidebar-row-action:disabled {
+  cursor: progress;
+  opacity: 0.35;
+}
+
+/* Trailing slot hosts the BrowserDropdown on the Dev server row. Needs to
+   be display:flex + shrink:0 so the 18px icon button inside (styled via
+   `.sidebar-row-action`) keeps its square footprint, and stopPropagation
+   on the wrapper prevents the row's own onClick from firing when the
+   user clicks the dropdown. */
+.sidebar-row-trailing {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* Footer is the button itself — no inner outline, no padding gap. */
+.workspace-sidebar-footer {
+  flex-shrink: 0;
+  border-top: 1px solid var(--border);
+  overflow: hidden;
+}
+
+/* Belt-and-suspenders against a horizontal scrollbar appearing inside a
+ * project body when a long tab title would otherwise force it. The row
+ * labels already ellipsize, but if a future descendant forgets min-width: 0
+ * in a flex chain, this caps the damage. */
+.workspace-sidebar .sidebar-project-body,
+.workspace-sidebar .sidebar-project-body-inner,
+.workspace-sidebar .sidebar-section-list {
+  overflow-x: hidden;
+}
+
+/* Layout-only — colors/hover/cursor come from the Button primitive (ghost).
+ * Full-bleed: fixed height; flush corners via the sidebar-wide
+ * border-radius reset above. Font pinned to the sidebar's base size so the
+ * footer matches the rows above it. */
+.workspace-sidebar-add-project {
+  height: 44px;
+  font-size: var(--font-size-base);
+}
+
+/* Workspace switcher — same full-bleed ghost button as "Open project",
+ * stacked directly below it (separated by a hairline). Only rendered when
+ * the user has 2+ workspaces; shows the active workspace's color + name. */
+.workspace-sidebar-footer-divider {
+  height: 1px;
+  background: var(--border);
+}
+
+.workspace-sidebar-ws-switch {
+  height: 44px;
+  font-size: var(--font-size-base);
+  gap: var(--spacing-sm);
+}
+
+.workspace-sidebar-add-icon {
+  width: 14px;
+  height: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-lg);
+  line-height: 1;
+}
+
+/* Project picker styles removed — replaced by the command palette (⌘O). */

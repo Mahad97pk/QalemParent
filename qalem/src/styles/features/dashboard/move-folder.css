@@ -1,0 +1,208 @@
+/* ============ Move Folder Modal ============ */
+
+.move-folder-modal {
+  min-width: 360px;
+}
+
+.move-folder-modal .modal-subtitle {
+  margin-bottom: 16px;
+  color: var(--text-secondary);
+  font-size: var(--font-size-lg);
+}
+
+.move-folder-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+}
+
+.move-folder-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 300px;
+  overflow-y: auto;
+  margin-bottom: 16px;
+}
+
+.move-folder-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--bg-tertiary);
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  color: var(--text-secondary);
+  font-size: var(--font-size-md);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background-color var(--transition),
+    color var(--transition),
+    border-color var(--transition);
+}
+
+.move-folder-item:hover:not(:disabled) {
+  background: var(--bg-secondary);
+  border-color: var(--border);
+  color: var(--text-primary);
+}
+
+.move-folder-item.active {
+  background: rgba(var(--success-rgb), 0.1);
+  border-color: var(--success);
+  color: var(--text-primary);
+}
+
+.move-folder-item:disabled {
+  cursor: default;
+}
+
+.move-folder-item-name {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.move-folder-item-count {
+  font-size: var(--font-size-base);
+  color: var(--text-muted);
+}
+
+.move-folder-item svg {
+  flex-shrink: 0;
+}
+
+.move-folder-item svg:last-child {
+  color: var(--success);
+}
+
+/* "Current" pill on the workspace the project already belongs to. */
+.move-folder-item-tag {
+  flex-shrink: 0;
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+/* Explanation of what moving a project actually does (above the confirm button). */
+.move-workspace-explainer {
+  margin: var(--spacing-md) 0 0;
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.move-folder-empty {
+  text-align: center;
+  padding: 24px;
+  color: var(--text-muted);
+  font-size: var(--font-size-md);
+}
+
+.move-folder-item.move-folder-new-btn {
+  border-style: dashed;
+  border-color: var(--border);
+  color: var(--text-muted);
+}
+
+.move-folder-item.move-folder-new-btn:hover:not(:disabled) {
+  color: var(--text-primary);
+  border-color: var(--text-secondary);
+}
+
+.move-folder-create-input {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px 6px 12px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+}
+
+.move-folder-create-input svg {
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+.move-folder-create-input input {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-size: var(--font-size-md);
+  font-family: inherit;
+  padding: 4px 0;
+}
+
+.move-folder-create-input input::placeholder {
+  color: var(--text-muted);
+}
+
+.move-folder-create-confirm {
+  padding: 4px 12px;
+  background: var(--accent);
+  color: var(--bg-primary);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.move-folder-create-confirm:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.move-folder-create-confirm:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* ============ Form Styles for Folder Modal ============ */
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: var(--font-size-md);
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.form-group input[type='text'] {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font-size: var(--font-size-lg);
+  transition: border-color var(--transition);
+}
+
+.form-group input[type='text']:focus {
+  outline: none;
+  border-color: var(--text-muted);
+}
+
+.form-group input[type='text']::placeholder {
+  color: var(--text-muted);
+}
+
+.form-error {
+  margin-top: 8px;
+  margin-bottom: 0;
+  color: var(--error);
+  font-size: var(--font-size-md);
+}

@@ -1,0 +1,13 @@
+{
+  "id": "hello-world",
+  "name": "Hello World",
+  "version": "1.0.0",
+  "description": "A test plugin that validates the Qalem plugin pipeline.",
+  "slots": ["toolbar"],
+  "author": "Qalem",
+  "repository": "",
+  "setup": [],
+  "min_app_version": "0.1.0",
+  "icon": "",
+  "api_version": 1
+}

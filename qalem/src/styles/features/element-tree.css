@@ -1,0 +1,205 @@
+/* Element tree panel — read-only navigator shown as the preview container's
+   left grid column in fullscreen edit mode (see preview.css for the grid). */
+
+.ss-tree-panel {
+  grid-area: 2 / 1 / -1 / 2;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border);
+  font-size: var(--font-size-base);
+}
+
+.ss-tree-panel__header {
+  display: flex;
+  align-items: center;
+  height: var(--preview-toolbar-h);
+  flex-shrink: 0;
+  padding: 0 var(--spacing-md);
+  /* Same surface as the preview toolbar so the bars read as one row. */
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+}
+
+.ss-tree-panel__title {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: var(--font-size-md);
+}
+
+/* Visual / Code toggle in the header. */
+.ss-tree-panel__modes {
+  margin-left: auto;
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+}
+.ss-tree-panel__mode {
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition:
+    background var(--transition),
+    color var(--transition);
+}
+.ss-tree-panel__mode.is-active {
+  background: var(--tint-strong);
+  color: var(--text-primary);
+}
+
+.ss-tree-panel__body {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: auto;
+  padding: var(--spacing-xs) 0;
+}
+
+/* Code (Edit-HTML) view. The body is just the positioning context; the tab
+   itself fills it absolutely (see below) so nothing can shrink it. */
+.ss-tree-panel__body--code {
+  position: relative;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* ── HTML code tab ──────────────────────────────────────────────────
+   Absolute-fill so the editor always spans the full panel cell — flex/intrinsic
+   sizing of the highlighted editor was collapsing the column to a partial width.
+   A header (what you're editing) + the editor + a footer (Revert/Save). */
+.ss-htmltab {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.ss-htmltab__head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--spacing-xs);
+  flex-shrink: 0;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-bottom: 1px solid var(--border);
+}
+.ss-htmltab__tag {
+  font-family: var(--font-mono, monospace);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--accent);
+}
+.ss-htmltab__cls {
+  font-family: var(--font-mono, monospace);
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+.ss-htmltab__main {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: var(--spacing-sm);
+}
+/* The highlighted editor fills the main area. */
+.ss-htmltab__main .ss-codeedit {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+}
+.ss-htmltab__msg {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+.ss-htmltab__foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-xs);
+  flex-shrink: 0;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-top: 1px solid var(--border);
+}
+
+.ss-tree-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  height: 24px;
+  padding-right: var(--spacing-sm);
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  color: var(--text-secondary);
+}
+
+.ss-tree-row:hover {
+  background: var(--bg-tertiary);
+}
+
+.ss-tree-row.selected {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+
+.ss-tree-chevron {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: transform var(--transition);
+}
+
+.ss-tree-chevron.open {
+  transform: rotate(90deg);
+}
+
+.ss-tree-chevron-spacer {
+  flex-shrink: 0;
+  width: 14px;
+}
+
+.ss-tree-tag {
+  flex-shrink: 0;
+  color: var(--text-primary);
+  font-family: monospace;
+}
+
+.ss-tree-class {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text-muted);
+  font-family: monospace;
+}
+
+.ss-tree-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.ss-tree-panel__empty,
+.ss-tree-panel__note {
+  padding: var(--spacing-md);
+  color: var(--text-muted);
+}

@@ -1,0 +1,398 @@
+/* Environment Variables Editor (rendered inside ModalFrame;
+   .env-editor-modal is the className on .modal-frame-content). */
+.env-editor-modal {
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  /* The content frame must not scroll as a whole: the file tabs stay fixed
+     and .env-vars-list does its own scrolling. */
+  overflow: hidden;
+}
+
+/* Used by the nested paste mini-modal's close button. */
+.env-close-btn {
+  padding: 4px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.env-close-btn:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.env-editor-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+  min-height: 0;
+  /* ModalFrame's content has no body padding (it lives on the header). */
+  padding: var(--spacing-xl);
+}
+
+.env-file-tabs {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.env-file-tab {
+  padding: 6px 12px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-secondary);
+  font-size: var(--font-size-base);
+  font-family: monospace;
+  cursor: pointer;
+  transition:
+    background-color var(--transition),
+    color var(--transition),
+    border-color var(--transition);
+}
+
+.env-file-tab:hover {
+  background: var(--border);
+  color: var(--text-primary);
+}
+
+.env-file-tab.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--bg-primary);
+}
+
+.env-file-tab.env-add-file {
+  padding: 6px 10px;
+  font-family: inherit;
+  font-size: var(--font-size-lg);
+  font-weight: 500;
+}
+
+.env-new-file-input {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.env-new-file-input input {
+  padding: 6px 10px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font-size: var(--font-size-base);
+  font-family: monospace;
+  width: 140px;
+}
+
+.env-new-file-input input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.env-new-file-input button {
+  padding: 6px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.env-new-file-input button:hover {
+  background: var(--border);
+  color: var(--text-primary);
+}
+
+.env-vars-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+  min-height: 0;
+}
+
+.env-vars-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 300px;
+}
+
+.env-var-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.env-var-key {
+  flex: 0 0 180px;
+  padding: 8px 10px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font-size: var(--font-size-md);
+  font-family: monospace;
+}
+
+.env-var-key:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.env-var-equals {
+  color: var(--text-muted);
+  font-family: monospace;
+}
+
+.env-var-value {
+  flex: 1;
+  padding: 8px 10px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font-size: var(--font-size-md);
+  font-family: monospace;
+}
+
+.env-var-value:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.env-var-visibility {
+  padding: 6px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.env-var-visibility:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.env-var-delete {
+  padding: 6px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.env-var-delete:hover {
+  background: var(--bg-tertiary);
+  color: var(--error);
+}
+
+.env-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.env-actions-left {
+  display: flex;
+  gap: 8px;
+}
+
+.env-actions-right {
+  display: flex;
+  gap: 8px;
+}
+
+.env-empty {
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: var(--font-size-lg);
+}
+
+.env-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+}
+
+.env-empty-icon {
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  font-family: monospace;
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+}
+
+.env-empty-state h4 {
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 8px 0;
+}
+
+.env-empty-state p {
+  font-size: var(--font-size-md);
+  color: var(--text-muted);
+  margin: 0 0 20px 0;
+  max-width: 260px;
+}
+
+.env-loading {
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.env-error {
+  color: var(--error);
+  font-size: var(--font-size-md);
+  padding: 8px 12px;
+  background: rgba(var(--error-rgb), 0.1);
+  border-radius: var(--radius);
+}
+
+/* Env Button in Header */
+
+/* Env Sync Warning */
+.env-sync-warning {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: rgba(var(--warning-light-rgb), 0.1);
+  border: 1px solid rgba(var(--warning-light-rgb), 0.3);
+  border-radius: var(--radius-md);
+}
+
+.env-sync-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.env-sync-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--warning-light);
+  font-size: var(--font-size-md);
+}
+
+.env-sync-info svg {
+  flex-shrink: 0;
+}
+
+/* Paste Modal */
+.env-paste-overlay {
+  position: absolute;
+  inset: 0;
+  background: var(--overlay-60);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  border-radius: var(--radius-lg);
+}
+
+.env-paste-modal {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  width: 90%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.env-paste-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.env-paste-header h4 {
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.env-paste-hint {
+  font-size: var(--font-size-md);
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.env-paste-textarea {
+  width: 100%;
+  min-height: 180px;
+  padding: 12px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: var(--font-size-md);
+  font-family: monospace;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.env-paste-textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.env-paste-textarea::placeholder {
+  color: var(--text-muted);
+  opacity: 0.6;
+}
+
+.env-paste-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}

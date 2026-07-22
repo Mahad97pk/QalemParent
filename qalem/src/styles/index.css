@@ -1,0 +1,80 @@
+/* Main styles entry point - imports all component styles */
+
+/* Global tokens + base rules */
+@import './global/base.css';
+
+/* Components (primitives) */
+@import './components/modal.css';
+@import './components/command-palette.css';
+@import './components/code-overlay.css';
+
+/* Features */
+@import './features/setup.css';
+@import './features/setup-agent-led.css';
+@import './features/project-list.css';
+@import './features/project-grid.css';
+@import './features/create-project.css';
+@import './features/import-project.css';
+@import './features/import-picker.css';
+@import './features/workspace/main.css';
+@import './features/workspace/split-pane.css';
+@import './features/workspace/tabs.css';
+@import './features/workspace/terminal.css';
+@import './features/workspace/sidebar.css';
+@import './features/workspace/connect-overlay.css';
+@import './features/workspace/compact-workspace.css';
+@import './features/toolbar.css';
+@import './features/preview.css';
+@import './features/preview-size.css';
+@import './features/agent-activity.css';
+@import './features/thumbnail-consent.css';
+@import './features/visual-editor.css';
+@import './features/visual-editor-image.css';
+@import './features/visual-editor-classes.css';
+@import './features/visual-editor-css-mode.css';
+@import './features/css-cascade.css';
+@import './features/css-globals.css';
+@import './features/css-predict.css';
+@import './features/element-tree.css';
+@import './features/device-mirror.css';
+@import './features/browser-tools.css';
+@import './features/github.css';
+@import './features/publish/dropdown.css';
+@import './features/publish/rows.css';
+@import './features/publish/states.css';
+@import './features/publish/sites.css';
+@import './features/publish/toasts.css';
+@import './features/env-editor.css';
+@import './features/assets-panel.css';
+@import './features/agents-panel.css';
+@import './features/browser-dropdown.css';
+@import './features/dashboard/main.css';
+@import './features/dashboard/projects.css';
+@import './features/dashboard/folders.css';
+@import './features/dashboard/move-folder.css';
+@import './features/update-banner.css';
+@import './features/branches/main.css';
+@import './features/branches/pr-list.css';
+@import './features/branches/branch-actions.css';
+@import './features/conflicts.css';
+@import './features/health.css';
+@import './features/health-tab.css';
+@import './features/diff-modal.css';
+@import './features/help-modal.css';
+@import './features/backups-modal.css';
+@import './features/languages-modal.css';
+@import './features/skills-modal.css';
+@import './features/mcp-modal.css';
+@import './features/plugins.css';
+@import './features/changelog.css';
+@import './features/settings.css';
+@import './features/support-panel.css';
+@import './features/project-rail.css';
+@import './features/shopify.css';
+
+/* Modes */
+@import './modes/education-mode.css';
+@import './modes/code-mode.css';
+
+/* Barebones visual editor shell (Phase 2) */
+@import './features/minimal-workspace.css';

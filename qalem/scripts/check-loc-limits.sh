@@ -1,0 +1,91 @@
+#!/usr/bin/env bash
+# LOC regression guard. Fails CI if any file grows past a documented ceiling.
+#
+# Per Block 15.6 of DX_REFACTOR_PLAN.md — this is a soft guard to force a
+# conversation before a file balloons. Limits can be bumped deliberately
+# by editing this script, but it won't happen silently.
+#
+# Seeds based on current state after Blocks 7 + 13.
+set -uo pipefail
+
+FAIL=0
+
+check_file() {
+  local path="$1"
+  local limit="$2"
+  if [ ! -f "$path" ]; then
+    return 0
+  fi
+  local lines
+  lines=$(wc -l <"$path" | tr -d ' ')
+  if [ "$lines" -gt "$limit" ]; then
+    echo "  ✗ $path: $lines LOC (limit $limit)"
+    FAIL=1
+  else
+    echo "  $path — $lines / $limit"
+  fi
+}
+
+echo "==> Ship Studio LOC regression guard"
+echo
+echo "Components (.tsx limit 1200):"
+# WorkspaceView + App.tsx got denser with the multi-project multitasking
+# work (per-project tab state, per-project dev servers, attach-based PTY
+# sessions) and again with the side-by-side agents feature (per-pane
+# state, split rendering, drag handles), then again with the native mobile
+# preview (web/mobile preview branch + DeviceMirror render). Raised
+# deliberately — extracting a TerminalPanes sub-component from WorkspaceView
+# is on the roadmap but doesn't belong in the same PR as the feature itself.
+# Bumped again for the visual editor's jump-to-code wiring (codeTarget state +
+# openInCode callback threaded to the Code tab). Bumped again for the Shopify
+# theme preview gate (the logic lives in useShopifyTheme/ShopifySetup; this is
+# just the render branch + hook call the orchestrator must own). Bumped again
+# for Workspaces (per-workspace credential isolation): the orchestrators own the
+# active-workspace gating, account-select screen routing, and move-workspace
+# wiring. Extracting a TerminalPanes sub-component from WorkspaceView and an
+# account router from App.tsx remain on the roadmap as follow-ups. Bumped again
+# for the agent-restart wiring (restartTerminalTab threaded to each Terminal +
+# the Agent Settings menu item) — small, on top of the Workspaces baseline.
+# Bumped by a hair for the Windows-compat pass: platform-aware shortcut labels
+# (kbd() import + two undo/redo hint lines). TerminalPanes extraction still owed.
+# Bumped again (small) for plugin failure surfacing (#165): pluginFailures and
+# the hosting-plugin count threaded into PluginsDropdown, usePlugins onError
+# wired to showToast. Pure wiring; the logic lives in usePlugins/PluginsDropdown.
+# Bumped again (small) for the pull-latest button: isPulling/handlePullLatest
+# threaded from useBranchManagement to BranchIndicator + the git.push/git.pull
+# palette params. Pure wiring; the pull logic lives in useBranchManagement.
+check_file src/components/workspace/WorkspaceView.tsx 1625
+check_file src/components/dashboard/ProjectList.tsx 900
+check_file src/components/plugins/PluginManager.tsx 700
+check_file src/components/dashboard/ImportProject.tsx 500
+# Bumped again for the barebones visual editor's minimal-mode gate: skips
+# onboarding/dashboard and mounts MinimalWorkspace when SHIPSTUDIO_MINIMAL
+# is set. Small, deliberate addition; extracting doesn't make sense while
+# the flag itself is still new.
+check_file src/App.tsx 1350
+echo
+echo "CSS (limit 1200 per file):"
+# The visual editor stylesheet carries every control's styling (box model,
+# dropdowns, color picker, collapsible sections, custom-CSS box) and grew with
+# the expanded property coverage, plus the neutral active-state primitives now
+# shared with the CSS-mode editor. Raised deliberately; splitting it by control
+# family is on the roadmap.
+check_file src/styles/features/visual-editor.css 1500
+# preview.css carries the whole live-preview surface (toolbar, page switcher,
+# locale switcher, device mirror, breakpoints, zoom) and crossed 1200 with the
+# custom page-selector scrollbar. Raised deliberately; splitting it by control
+# family is on the roadmap.
+check_file src/styles/features/preview.css 1300
+while IFS= read -r f; do
+  check_file "$f" 1200
+done < <(find src/styles -maxdepth 3 -name '*.css' ! -name 'visual-editor.css' ! -name 'preview.css' 2>/dev/null)
+echo
+
+if [ $FAIL -ne 0 ]; then
+  echo "==> FAIL: file(s) exceed soft LOC ceiling."
+  echo "    Either extract sub-components or raise the limit in scripts/check-loc-limits.sh"
+  echo "    (raise deliberately, not reflexively)."
+  exit 1
+fi
+
+echo "==> OK: all files under LOC ceiling."

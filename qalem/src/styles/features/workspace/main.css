@@ -1,0 +1,134 @@
+/* Workspace */
+.app.workspace {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Title bar — sits alongside macOS traffic lights */
+.workspace-titlebar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 32px;
+  /* Left padding clears the macOS traffic lights (overlay mode) */
+  padding: 0 16px 0 78px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  -webkit-user-select: none;
+  user-select: none;
+  cursor: default;
+  flex-shrink: 0;
+}
+
+.workspace-titlebar h1 {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  flex-shrink: 1;
+}
+
+.workspace-titlebar .project-path {
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+  font-family: monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  flex-shrink: 1;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  transition: color var(--transition);
+}
+
+.workspace-titlebar .project-path:hover {
+  color: var(--text-secondary);
+  text-decoration: underline;
+}
+
+.workspace-titlebar .back-link {
+  font-size: var(--font-size-sm);
+  white-space: nowrap;
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color var(--transition);
+}
+
+.workspace-titlebar .back-link:hover {
+  color: var(--text-primary);
+}
+
+/* Toolbar — action buttons below the title bar */
+.workspace-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 10px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+}
+
+/* Collapse the header's text labels to icon-only so every control stays
+   visible (and reachable) instead of overflowing or scrolling out of sight.
+   The icons + tooltips carry the meaning. Only genuinely wide windows keep
+   labels — the header carries enough controls that labels crowd each other
+   well before they actually overflow. Keep this breakpoint in sync with the
+   terminal toolbar's (workspace/terminal.css) so every label collapses in
+   unison. */
+@media (max-width: 1600px) {
+  .workspace-header .toolbar-btn-label,
+  .workspace-header .workspace-tab > span,
+  .workspace-header .branch-pull-button > span {
+    display: none;
+  }
+
+  /* Tighter tab padding once they're icon-only. */
+  .workspace-header .workspace-tab {
+    padding: 0 var(--spacing-sm);
+  }
+
+  .workspace-header .branch-pull-button {
+    padding: 0;
+    width: 28px;
+  }
+}
+
+/* Two-column row below the titlebar: optional rail + main content. */
+.workspace-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Workspace-only sidebar toggle. The home/projects view renders its own
+ * sidebar under `.projects-with-rail` and never gets this class, so the
+ * sidebar stays visible there as intended. */
+.workspace-body.is-sidebar-hidden > .workspace-sidebar {
+  display: none;
+}
+
+.workspace-main {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.workspace-content {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+  overflow: hidden;
+}

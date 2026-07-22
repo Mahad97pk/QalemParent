@@ -1,0 +1,68 @@
+/* Import Type Picker Modal */
+
+.import-picker-modal {
+  max-width: 460px;
+  /* Override ModalFrame's --bg-secondary panel back to --bg-primary so the
+     nested surface hierarchy reads correctly: panel (primary) < cards
+     (secondary) < icon tiles (tertiary). Without this the cards share the
+     panel fill and lose their raised cue. */
+  background: var(--bg-primary);
+}
+
+.import-picker-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px 24px 24px;
+}
+
+.import-picker-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
+  text-align: left;
+  width: 100%;
+}
+
+.import-picker-card:hover {
+  border-color: var(--text-secondary);
+  background: var(--bg-tertiary);
+}
+
+.import-picker-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  flex-shrink: 0;
+}
+
+.import-picker-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.import-picker-title {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.import-picker-subtitle {
+  font-size: var(--font-size-base);
+  color: var(--text-secondary);
+}

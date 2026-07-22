@@ -1,0 +1,682 @@
+/* Terminal Tabs Bar */
+.terminal-tabs-bar {
+  display: flex;
+  align-items: center;
+  /* Match .terminal-toolbar's 10px horizontal padding so the Restart /
+     Settings buttons align vertically with the sidebar toggle above. */
+  padding: 9px 10px;
+  min-height: 48px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  /* A floor gap so the left (undo/redo) and right (Split / Agent Settings)
+     clusters never butt up against each other once the flex:1 spacer between
+     them collapses on a narrow pane. */
+  gap: var(--spacing-sm);
+}
+
+/* Collapse "Agent Settings" to its gear icon at the SAME window width as the
+   header's label collapse (workspace/main.css) so every toolbar label drops to
+   icon-only in unison. Keep this breakpoint in sync with that one. */
+@media (max-width: 1600px) {
+  .terminal-tabs-bar .toolbar-btn-label {
+    display: none;
+  }
+}
+
+/* Right-side cluster — groups feature toggles + the Agent Settings
+   dropdown so they sit together with a consistent gap. Mirrors the
+   left-side undo/redo cluster's `gap: 6` rhythm. */
+.terminal-tabs-bar-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.terminal-tabs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  flex: 1;
+}
+
+/* Terminal Tab Selector Dropdown */
+.tab-selector {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.tab-selector-trigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 8px;
+  max-width: 220px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-secondary);
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background-color var(--transition),
+    color var(--transition),
+    border-color var(--transition);
+  outline: none;
+}
+
+.tab-selector-trigger:hover,
+.tab-selector-trigger.open {
+  background: var(--border);
+  color: var(--text-primary);
+  border-color: var(--text-muted);
+}
+
+.tab-selector-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.tab-selector-shortcut {
+  font-family: 'SF Mono', Monaco, monospace;
+  font-size: var(--font-size-base);
+  color: var(--text-muted);
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.tab-selector-cmd {
+  font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-size: var(--font-size-lg);
+}
+
+.tab-selector-trigger svg {
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+.tab-selector-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: var(--z-modal-overlay);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  width: 260px;
+  box-shadow: var(--shadow-md);
+  padding: 4px;
+}
+
+.tab-selector-section-label {
+  padding: 4px 10px 2px;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+}
+
+.tab-selector-item-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.tab-selector-item-row .tab-selector-item {
+  flex: 1;
+  min-width: 0;
+}
+
+.tab-selector-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 10px;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: var(--font-size-base);
+  text-align: left;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: background var(--transition);
+  white-space: nowrap;
+}
+
+.tab-selector-item:hover {
+  background: var(--bg-tertiary);
+}
+
+.tab-selector-item.active {
+  color: var(--accent);
+}
+
+.tab-selector-item.add {
+  color: var(--text-muted);
+  gap: 6px;
+}
+
+.tab-selector-item.add:hover {
+  color: var(--text-primary);
+}
+
+.tab-selector-item-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  flex: 1;
+}
+
+.tab-selector-item-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tab-selector-item-shortcut {
+  font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-size: var(--font-size-base);
+  color: var(--text-muted);
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.tab-selector-attention-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: var(--success-light);
+  flex-shrink: 0;
+}
+
+.tab-selector-close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  background: transparent;
+  color: var(--text-muted);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  flex-shrink: 0;
+  opacity: 0;
+  transition:
+    opacity var(--transition-fast),
+    background var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.tab-selector-item:hover .tab-selector-close-btn {
+  opacity: 1;
+}
+
+.tab-selector-close-btn:hover {
+  background: rgba(var(--error-light-rgb), 0.15);
+  color: var(--danger);
+}
+
+.tab-selector-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 0;
+}
+
+/* Wraps the full-mode terminal tabs bar + the absolute-positioned
+ * `.terminal-content` stack. Flex column so the content stack stretches to
+ * fill the split pane's left half. */
+.workspace-terminal-view {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.terminal-tab-content {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 12px;
+  visibility: hidden;
+}
+
+/* Opencode draws its own full-bleed TUI — it wants 100% of the tab, no
+   gutter on any side. Claude and Codex keep their 12px left gutter. */
+.terminal-tab-content[data-agent-id='opencode'] {
+  left: 0;
+  padding: 0;
+  background: var(--bg-primary);
+}
+
+.terminal-tab-content[data-agent-id='opencode'] .xterm,
+.terminal-tab-content[data-agent-id='opencode'] .xterm-viewport,
+.terminal-tab-content[data-agent-id='opencode'] .xterm-screen {
+  width: 100% !important;
+  height: 100% !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  background: var(--bg-primary) !important;
+}
+
+.terminal-tab-content[data-agent-id='opencode'] .xterm-viewport {
+  scrollbar-width: none;
+  overflow: hidden !important;
+}
+
+.terminal-tab-content[data-agent-id='opencode'] .xterm-viewport::-webkit-scrollbar {
+  display: none;
+}
+
+.terminal-tab-content.active {
+  visibility: visible;
+}
+
+/* ===== Side-by-side split view ===== */
+/* When `.terminal-content.split` is on, each pane gets its column via
+   inline `left/width` on `.terminal-tab-content.in-pane`. Reserve vertical
+   space at the top for the pane header strip. */
+.terminal-content.split {
+  /* Match `.terminal-tabs-bar`'s `min-height: 48px` so the pane header
+     visually reads as a continuation of the terminal toolbar above. */
+  --split-pane-header-height: 48px;
+}
+
+.terminal-split-headers {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--split-pane-header-height);
+  z-index: 2;
+  pointer-events: none;
+}
+
+.terminal-split-pane-header {
+  position: absolute;
+  top: 0;
+  height: var(--split-pane-header-height);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  /* Match `.terminal-tabs-bar`'s 10px horizontal padding so the pane
+     label trigger sits flush with the Undo/Redo and Branch indicator
+     above. */
+  padding: 0 10px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  pointer-events: auto;
+}
+
+/* Pane label trigger reuses .toolbar-icon-btn for consistency with the
+   Agent Settings dropdown. Natural size — the action cluster's
+   `margin-left: auto` handles right-alignment; no max-width math needed.
+   `min-width: 0` (on the Dropdown primitive's wrapper AND the trigger
+   inside it) lets the label ellipsize if a pane gets very narrow. */
+.terminal-split-pane-header .ss-dropdown {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.terminal-split-pane-trigger {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.terminal-split-pane-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.terminal-split-pane-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+
+/* The per-pane add/remove buttons reuse `.toolbar-icon-btn` directly —
+   same height (28px) and padding as the dropdown trigger next to them,
+   so the row reads as one consistent control cluster. No size override
+   needed beyond the base class. */
+
+/* Drag handle between adjacent split panes. Mirrors the visual language
+   of `.split-pane-handle` used by the workspace's preview SplitPane — 8px
+   wide track with a centered vertical bar, accent-on-hover. The pane
+   columns leave a matching 4px gutter on each side of the boundary so
+   the handle sits between panes rather than overlapping their content. */
+.terminal-split-handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-secondary);
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  cursor: col-resize;
+  z-index: 4;
+  transition:
+    background var(--transition),
+    border-color var(--transition);
+}
+
+.terminal-split-handle:hover,
+.terminal-split-handle:active {
+  background: var(--bg-tertiary);
+  border-color: var(--accent);
+}
+
+.terminal-split-handle-bar {
+  width: 2px;
+  height: 40px;
+  background: var(--text-muted);
+  border-radius: 1px;
+  transition: background var(--transition);
+}
+
+.terminal-split-handle:hover .terminal-split-handle-bar,
+.terminal-split-handle:active .terminal-split-handle-bar {
+  background: var(--accent);
+}
+
+.terminal-logs-tabs {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+
+/* Toolbar Dropdown.
+   The Agent Settings dropdown (ToolbarDropdown) and the split-pane tab
+   picker (TerminalSplitHeaders) are built on the Dropdown primitive in
+   portal mode; the shell (position, bg, border, shadow, click-outside)
+   comes from `.ss-dropdown__menu` in base.css. Only the deltas the
+   primitive doesn't provide live here, passed via `menuClassName`. */
+
+/* Wraps PluginsDropdown's hand-rolled trigger + always-mounted menu. */
+.toolbar-dropdown-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+/* Doubled selector outranks visual-editor.css's unscoped `.ss-dropdown__*`
+   rules (imported after this file), which would otherwise impose the
+   visual editor's compact enum-menu styling on these menus. */
+.ss-dropdown__menu.toolbar-dropdown-menu {
+  /* The menu floats over terminal panes / preview chrome — keep the
+     pre-primitive modal-overlay tier rather than --z-dropdown. */
+  z-index: var(--z-modal-overlay);
+  max-height: none;
+}
+
+/* Re-assert the primitive's item metrics (base.css) over visual-editor.css's
+   compact overrides; `nowrap` keeps long pane/tab titles on one line, widening
+   the menu instead of wrapping (pre-migration behavior). */
+.ss-dropdown__menu.toolbar-dropdown-menu .ss-dropdown__item {
+  padding: var(--spacing-sm) var(--spacing-md);
+  font-size: var(--font-size-md);
+  white-space: nowrap;
+}
+
+.ss-dropdown__menu.toolbar-dropdown-menu .ss-dropdown__item:not(.ss-dropdown__item--active) {
+  color: var(--text-primary);
+}
+
+/* PluginsDropdown's always-mounted menu (NOT the primitive — see the
+   mounting-strategy comment in PluginsDropdown.tsx). Mirrors the
+   `.ss-dropdown__menu` shell so it stays visually identical. */
+.plugins-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  /* Anchor to the left of the trigger — the Plugins dropdown lives in
+     the left cluster of the workspace header, so the menu expands
+     rightward/downward from the button. */
+  left: 0;
+  z-index: var(--z-modal-overlay);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  min-width: 200px;
+  box-shadow: var(--shadow);
+  padding: var(--spacing-xs);
+}
+
+.toolbar-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: var(--font-size-md);
+  text-align: left;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: background var(--transition);
+  white-space: nowrap;
+}
+
+.toolbar-dropdown-item:hover {
+  background: var(--bg-tertiary);
+}
+
+/* Shown inside a dropdown menu when there are zero items to list
+   (e.g. Plugins dropdown with no plugins installed). */
+.toolbar-dropdown-empty-hint {
+  padding: 10px 12px;
+  font-size: var(--font-size-base);
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* Plugins dropdown stays mounted so plugin subtrees survive open/close
+   cycles. Hidden via off-screen absolute positioning (not display:none)
+   so plugin-rendered modals using position:fixed can still paint to
+   the viewport even while their dropdown ancestor is "closed". */
+.plugins-dropdown-menu.is-hidden {
+  left: -99999px !important;
+  top: -99999px !important;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+/* Plugin modals use position:fixed inside the hidden menu — they need
+   to override the inherited `visibility: hidden` so they can render. */
+.plugins-dropdown-menu.is-hidden [class*='overlay'],
+.plugins-dropdown-menu.is-hidden [class*='modal'],
+.plugins-dropdown-menu.is-hidden [class*='portal'] {
+  visibility: visible;
+  pointer-events: auto;
+}
+
+/* One row per plugin in the Plugins dropdown. The plugin's own
+   `toolbar` slot component is rendered inside `.plugin-dropdown-row-
+   trigger` — it stays the real click target (preserving its internal
+   modalOpen state), but we strip the toolbar-icon-btn chrome so it
+   looks like a menu row icon. The label alongside it is the plugin
+   name from manifest (purely decorative). */
+.plugin-dropdown-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background var(--transition);
+}
+
+.plugin-dropdown-row:hover {
+  background: var(--bg-tertiary);
+}
+
+.plugin-dropdown-row-trigger {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Neutralize the plugin's toolbar button chrome (border, padding,
+   background) so it looks like a menu-row icon slot. The plugin
+   retains its SVG logo and its click handler — only the outer
+   button styling is reset. */
+.plugin-dropdown-row-trigger > * > button,
+.plugin-dropdown-row-trigger button.toolbar-icon-btn {
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  min-height: 22px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+}
+
+.plugin-dropdown-row:hover .plugin-dropdown-row-trigger button.toolbar-icon-btn {
+  color: var(--text-primary);
+}
+
+.plugin-dropdown-row-trigger svg {
+  width: 14px;
+  height: 14px;
+}
+
+.plugin-dropdown-row-label {
+  font-size: var(--font-size-md);
+  color: var(--text-primary);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* Compact plugin-icon slot used inside dropdown rows. Mirrors the
+   `.plugin-icon-container` defense-in-depth from plugins.css but at
+   14×14 so the plugin's real SVG logo (Vercel, Webflow, etc.) fits a
+   menu row. All inner layout, borders, backgrounds, and padding from
+   the plugin's own toolbar component are neutralized — only the SVG
+   logo survives. Any modals/dropdowns the plugin opens on its own are
+   hidden because they'd render adjacent and break the menu layout. */
+.plugin-dropdown-icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  color: var(--text-secondary);
+  overflow: hidden;
+  font-size: 0;
+  line-height: 0;
+}
+
+.plugin-dropdown-icon * {
+  font-size: 0 !important;
+  line-height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  background: transparent !important;
+  gap: 0 !important;
+  min-height: 0 !important;
+  min-width: 0 !important;
+  box-shadow: none !important;
+}
+
+.plugin-dropdown-icon > * {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  color: var(--text-secondary);
+}
+
+.plugin-dropdown-icon svg {
+  width: 14px !important;
+  height: 14px !important;
+  flex-shrink: 0;
+}
+
+.plugin-dropdown-icon [class*='modal'],
+.plugin-dropdown-icon [class*='dropdown'],
+.plugin-dropdown-icon [class*='menu'],
+.plugin-dropdown-icon [class*='tooltip'] {
+  display: none !important;
+}
+
+/* ON/OFF + SWAP badges inside primitive DropdownItems (Auto-accept in the
+   Agent Settings menu; tab assignment in the split-pane picker). */
+.toolbar-dropdown-menu .toggle-indicator {
+  margin-left: auto;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-tertiary);
+  color: var(--text-muted);
+}
+
+.toolbar-dropdown-menu .toggle-indicator.on {
+  background: rgba(var(--warning-rgb), 0.2);
+  color: var(--warning);
+}
+
+/* First-run hint shown over a fresh agent terminal until the user types. */
+.terminal-firstrun-hint {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  /* Bottom-anchored; the card fills the pane width with equal margins
+     (the padding below), centering only once it hits its max width. */
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  /* Left padding is 0: the terminal content already has a left offset, so a
+     left pad here would double it and push the card right. */
+  padding: var(--spacing-md) var(--spacing-md) var(--spacing-md) 0;
+  pointer-events: none;
+}
+
+.terminal-firstrun-hint-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  /* Fill the (possibly split) pane, capping only on very wide panes. */
+  width: 100%;
+  max-width: var(--hint-card-max-w);
+  padding: var(--spacing-lg);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  text-align: center;
+}
+
+.terminal-firstrun-hint-card strong {
+  color: var(--text-primary);
+  font-size: var(--font-size-md);
+  font-weight: 600;
+}
+
+.terminal-firstrun-hint-card span {
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+}

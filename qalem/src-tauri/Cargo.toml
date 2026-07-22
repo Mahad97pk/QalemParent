@@ -1,0 +1,84 @@
+[package]
+name = "qalem"
+version = "0.15.0"
+description = "Qalem — a desktop app for shipping web projects with AI coding agents."
+authors = ["Julian Galluzzo", "Qalem contributors"]
+license = "MIT"
+repository = "https://github.com/ship-studio/ship-studio"
+homepage = "https://github.com/ship-studio/ship-studio"
+edition = "2021"
+
+# Pattern enforcement lints — see also src-tauri/clippy.toml for disallowed-methods.
+# unwrap/expect are WARN (not deny) because the existing codebase has many sites
+# that would block CI immediately. Per-module migration raises these to deny as
+# sites are paid down.
+[lints.clippy]
+unwrap_used = "warn"
+expect_used = "warn"
+
+[lib]
+name = "qalem_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["macos-private-api", "protocol-asset", "unstable"] }
+tauri-plugin-opener = "2"
+tauri-plugin-shell = "2"
+tauri-plugin-pty = { path = "plugins/tauri-plugin-pty" }
+portable-pty = { version = "0.9.0", features = ["serde_support"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["rt-multi-thread", "time", "macros", "process", "io-util", "net"] }
+dirs = "5"
+which = "6"
+base64 = "0.22"
+url = "2"
+tauri-plugin-screenshots = "2.2.0"
+tauri-plugin-fs = "2"
+image = { version = "0.25.9", default-features = false, features = ["png"] }
+tauri-plugin-updater = "2.9.0"
+tauri-plugin-process = "2.3.1"
+tauri-plugin-deep-link = "2"
+semver = "1"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["json", "env-filter"] }
+tracing-appender = "0.2"
+sentry = { version = "0.34", default-features = false, features = ["backtrace", "contexts", "panic", "reqwest", "rustls"] }
+sentry-tracing = "0.34"
+once_cell = "1.19"
+chrono = { version = "0.4", default-features = false, features = ["clock"] }
+zip = "2"
+tauri-plugin-dialog = "2"
+walkdir = "2"
+ignore = "0.4"
+dunce = "1"
+urlencoding = "2"
+hyper = { version = "1", features = ["http1", "server", "client"] }
+# Android mirror bridge: WebSocket server streaming screenrecord H.264 to the webview.
+tokio-tungstenite = "0.24"
+futures-util = "0.3"
+hyper-util = { version = "0.1", features = ["tokio", "http1", "server", "client-legacy"] }
+http-body-util = "0.1"
+bytes = "1"
+notify = { version = "7", default-features = false, features = ["macos_fsevent"] }
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+uuid = { version = "1", features = ["v4"] }
+hmac = "0.12"
+sha2 = "0.10"
+hex = "0.4"
+thiserror = "1"
+# Native clipboard read for Windows terminal paste (WebView2 gates keyboard
+# paste behind an async permission wait — see commands/clipboard.rs).
+arboard = "3"
+
+[dev-dependencies]
+tempfile = "3"
+
+# macOS-specific dependencies for WebKit JavaScript evaluation
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2 = "0.5"
+objc2-foundation = { version = "0.2", features = ["NSString"] }
+block2 = "0.5"
