@@ -50,15 +50,14 @@ export function BootLoadingScreen() {
       {timedOut ? (
         <div className="boot-watchdog">
           <p>
-            Qalem is taking longer than expected to start. A startup check may be stuck —
-            restarting usually fixes this.
+            Qalem is taking longer than expected to start. A startup check may be stuck — restarting
+            usually fixes this.
           </p>
           <Button variant="primary" onClick={() => void handleRestart()}>
             Restart Qalem
           </Button>
           <p className="boot-watchdog-hint">
-            If this keeps happening, check the logs at ~/Library/Logs/Qalem/ and reach out on
-            Slack.
+            If this keeps happening, check the logs at ~/Library/Logs/Qalem/ and reach out on Slack.
           </p>
         </div>
       ) : (

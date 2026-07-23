@@ -78,7 +78,6 @@ fn cleanup_agent_processes() {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-
     // Initialize logging first
     if let Err(e) = logging::init_logging() {
         eprintln!("Failed to initialize logging: {e}");
@@ -93,8 +92,6 @@ pub fn run() {
     // Hydrate the default agent cache from persisted AppState
     let app_state = commands::setup::read_app_state();
     agent::init_default_agent(app_state.default_agent_id.as_deref());
-
-    
 
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
@@ -286,7 +283,6 @@ pub fn run() {
             }
         })
         .invoke_handler(tauri::generate_handler![
-        
             // Projects
             commands::projects::list_projects,
             commands::projects::get_dashboard_projects,

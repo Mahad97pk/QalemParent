@@ -163,10 +163,7 @@ fn ensure_gitignore_has_qalem_sync(project: &std::path::Path) -> Result<(), Stri
 
     let already_ignored = content.lines().any(|line| {
         let trimmed = line.trim();
-        trimmed == entry
-            || trimmed == ".qalem"
-            || trimmed == "/.qalem/"
-            || trimmed == "/.qalem"
+        trimmed == entry || trimmed == ".qalem" || trimmed == "/.qalem/" || trimmed == "/.qalem"
     });
 
     if already_ignored {
@@ -809,10 +806,7 @@ pub async fn ensure_gitignore_has_qalem(project_path: String) -> Result<(), Comm
 
     let already_ignored = content.lines().any(|line| {
         let trimmed = line.trim();
-        trimmed == entry
-            || trimmed == ".qalem"
-            || trimmed == "/.qalem/"
-            || trimmed == "/.qalem"
+        trimmed == entry || trimmed == ".qalem" || trimmed == "/.qalem/" || trimmed == "/.qalem"
     });
 
     if already_ignored {

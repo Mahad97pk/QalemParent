@@ -253,8 +253,6 @@ pub async fn kill_all_pty() -> Result<u32, CommandError> {
 pub async fn cleanup_orphaned_processes() -> Result<(), CommandError> {
     #[cfg(unix)]
     {
-        
-
         // Also kill orphaned node processes running next-server (from dev server)
         let _ = create_command("sh")
             .args([

@@ -1397,10 +1397,7 @@ mod tests {
             let root = qalem_root();
             let sneaky = root.join("..").join(".ssh").join("authorized_keys");
             let result = validate_project_file_path(&sneaky.to_string_lossy());
-            assert!(
-                result.is_err(),
-                "traversal out of Qalem must be rejected"
-            );
+            assert!(result.is_err(), "traversal out of Qalem must be rejected");
         }
 
         #[test]

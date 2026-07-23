@@ -14,7 +14,6 @@ use crate::utils::{create_command, get_extended_path};
 use std::collections::HashMap;
 use std::sync::{LazyLock, Mutex};
 
-
 /// Information about a spawned PTY process
 pub(super) struct PtyInfo {
     /// OS process ID

@@ -76,8 +76,8 @@ pub fn init_logging() -> Result<(), String> {
 
     // Create environment filter
     // Default to info level, can be overridden with RUST_LOG env var
-    let filter = EnvFilter::try_from_default_env()
-        .unwrap_or_else(|_| EnvFilter::new("qalem_lib=info,warn"));
+    let filter =
+        EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("qalem_lib=info,warn"));
 
     // Build the subscriber
     let subscriber = tracing_subscriber::registry().with(filter).with(file_layer);

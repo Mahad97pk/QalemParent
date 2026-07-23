@@ -459,12 +459,7 @@ mod tests {
     fn add_extended_path_candidates_walks_shell_path_dirs() {
         let mut paths = Vec::new();
         let mut seen = std::collections::HashSet::new();
-        add_extended_path_candidates(
-            &mut paths,
-            &mut seen,
-            "codex",
-            "/tmp/qalem-a:/tmp/qalem-b",
-        );
+        add_extended_path_candidates(&mut paths, &mut seen, "codex", "/tmp/qalem-a:/tmp/qalem-b");
 
         assert!(paths.contains(&std::path::PathBuf::from("/tmp/qalem-a/codex")));
         assert!(paths.contains(&std::path::PathBuf::from("/tmp/qalem-b/codex")));

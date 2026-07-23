@@ -787,9 +787,8 @@ fn compute_app_router_status(workspace: &Path) -> I18nStatus {
     status.locales = locales;
     status.default_locale = parse_default_locale(&content);
     if has_non_string || status.locales.is_empty() {
-        status.parse_warning = Some(
-            "A next-intl config exists but Qalem couldn't read its locales.".to_string(),
-        );
+        status.parse_warning =
+            Some("A next-intl config exists but Qalem couldn't read its locales.".to_string());
     }
     status
 }
@@ -882,9 +881,8 @@ fn compute_status(workspace: &Path) -> I18nStatus {
                     .to_string(),
             );
         } else if status.locales.is_empty() {
-            status.parse_warning = Some(
-                "An i18n config exists but Qalem couldn't read its locales.".to_string(),
-            );
+            status.parse_warning =
+                Some("An i18n config exists but Qalem couldn't read its locales.".to_string());
         }
     }
 
