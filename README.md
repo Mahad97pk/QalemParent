@@ -1,2 +1,2 @@
 # QalemParent
-Qalem, a dual visual and code editor
+Qalem, work in progress
