@@ -10,66 +10,25 @@
  * @module main
  */
 
-import './instrument';
-
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { reactErrorHandler } from '@sentry/react';
 import App from './App';
 import { ErrorBoundary } from './components/ErrorBoundary';
-import { exposeReactGlobals, lookupBlobOwner, markPluginCrashed } from './lib/plugin-loader';
-import { uninstallPlugin } from './lib/plugins';
-import { exposePluginContextRef } from './contexts/PluginContext';
 import { OverlayScrollbars } from 'overlayscrollbars';
 import 'overlayscrollbars/overlayscrollbars.css';
 
-// Expose React globals and context ref for plugins before any rendering
-exposeReactGlobals(React, ReactDOM);
-exposePluginContextRef();
-
-// Global safety net: catch unhandled errors from plugins.
-// Plugins that bundle their own React can throw errors that escape React error
-// boundaries entirely. This catches them and auto-removes the crashing plugin.
-window.addEventListener('error', (event) => {
-  const err = event.error as { message?: string } | undefined;
-  const msg: string = (typeof err?.message === 'string' ? err.message : event.message) ?? '';
-  const isPluginError =
-    event.filename?.startsWith('blob:') ||
-    msg.includes('Plugin context') ||
-    msg.includes('plugin-sdk');
-  if (!isPluginError) return;
-
-  event.preventDefault();
-  console.error('[Qalem] Plugin error caught by global handler:', msg);
-
-  // Identify and auto-remove the crashing plugin
-  const blobUrl = event.filename?.startsWith('blob:') ? event.filename : null;
-  const owner = blobUrl ? lookupBlobOwner(blobUrl) : null;
-  if (owner) {
-    markPluginCrashed(owner.pluginId);
-    void uninstallPlugin(owner.projectPath, owner.pluginId).catch((e) =>
-      console.error(`Failed to auto-remove plugin "${owner.pluginId}":`, e)
-    );
-  }
-});
+// Silently drop Tauri's internal race: when a plugin:pty|read invoke's
+// response arrives after the component that issued it unmounted (common
+// during rapid project switches), the runtime looks up a listener that
+// was already garbage-collected and throws TypeError accessing
+// `listeners[eventId].handlerId` from its injected bootstrap script.
+// This is a Tauri v2 runtime bug — not our code — and doesn't affect
+// functionality. Suppressing to keep the console clean.
 window.addEventListener('unhandledrejection', (event) => {
   const reason: unknown = event.reason;
   const stack = reason instanceof Error ? reason.stack || '' : String(reason);
   const message = reason instanceof Error ? reason.message : String(reason);
 
-  if (stack.includes('blob:')) {
-    event.preventDefault();
-    console.error('[Qalem] Plugin unhandled rejection caught by global handler:', reason);
-    return;
-  }
-
-  // Silently drop Tauri's internal race: when a plugin:pty|read invoke's
-  // response arrives after the component that issued it unmounted (common
-  // during rapid project switches), the runtime looks up a listener that
-  // was already garbage-collected and throws TypeError accessing
-  // `listeners[eventId].handlerId` from its injected bootstrap script.
-  // This is a Tauri v2 runtime bug — not our code — and doesn't affect
-  // functionality. Suppressing to keep the console clean.
   if (
     message.includes('listeners[eventId]') ||
     stack.includes('listeners[eventId]') ||
@@ -124,18 +83,6 @@ const OS_SKIP_SELECTOR = [
   '[class*="-modal"]',
   '[class*="-overlay"]',
   '[class*="-dropdown"]',
-  '.branches-tab',
-  '.prs-tab',
-  '.dashboard-with-changelog',
-  '.dashboard-scroll-container',
-  '.changelog-list',
-  '.support-panel',
-  // Workspace sidebar scroll owns its own webkit scrollbar styling and
-  // applies `!important` block layout to its direct children. Letting
-  // OverlayScrollbars wrap it breaks the scrollbar entirely (the OS
-  // viewport gets caught by the `> *` rule) and makes the list unscrollable
-  // when several projects are open.
-  '.workspace-sidebar-scroll',
   // CodeMirror owns its own scrolling. Its `.cm-scroller` is overflow:auto, so
   // OverlayScrollbars would otherwise grab it and relocate the gutter/content
   // out of CodeMirror's flex row — the line-number gutter collapses to full
@@ -210,13 +157,7 @@ requestAnimationFrame(() => {
 const urlParams = new URLSearchParams(window.location.search);
 const initialProjectPath = urlParams.get('project');
 
-ReactDOM.createRoot(document.getElementById('root') as HTMLElement, {
-  // Only report errors that escape ErrorBoundary. Caught errors already flow
-  // through `logger.logError` → backend `log_frontend_event` → `tracing::error!`
-  // → sentry_tracing layer, so wiring `onCaughtError` here would double-report.
-  onUncaughtError: reactErrorHandler(),
-  onRecoverableError: reactErrorHandler(),
-}).render(
+ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
     <ErrorBoundary>
       <App initialProjectPath={initialProjectPath} />
