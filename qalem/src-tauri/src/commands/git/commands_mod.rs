@@ -3,6 +3,7 @@
 //! This module re-exports all Tauri command handlers organized by category.
 
 pub mod accounts;
+pub mod analytics;
 pub mod assets;
 pub mod claude;
 pub mod clipboard;
@@ -31,6 +32,7 @@ pub mod window;
 
 // Re-export all commands for easy access in lib.rs
 pub use accounts::*;
+pub use analytics::*;
 pub use assets::*;
 pub use claude::*;
 pub use clipboard::*;
@@ -41,6 +43,7 @@ pub use env::*;
 pub use external_projects::*;
 pub use folders::*;
 pub use github::*;
+pub use project_meta::*;
 pub use health::*;
 pub use i18n::*;
 pub use ide::*;

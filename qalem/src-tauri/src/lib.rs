@@ -11,7 +11,6 @@
 //! - **Utilities**: Screenshots, IDE launcher, prerequisite checks
 
 pub mod agent;
-pub mod agent_bridge;
 pub mod cache;
 pub mod commands;
 pub mod errors;
@@ -93,20 +92,11 @@ pub fn run() {
     cleanup_agent_processes();
     tracing::debug!("Orphaned agent processes cleaned up");
 
-    // Reap serve-sim mirror daemons orphaned by a previous hard crash — they pin
-    // the mirror port and would otherwise accumulate one per crash.
-    #[cfg(target_os = "macos")]
-    {
-        commands::mobile::reap_orphaned_serve_sim();
-        tracing::debug!("Orphaned serve-sim mirrors reaped");
-    }
-
     // Hydrate the default agent cache from persisted AppState
     let app_state = commands::setup::read_app_state();
     agent::init_default_agent(app_state.default_agent_id.as_deref());
 
-    // Initialize PostHog analytics (generates device_id on first launch)
-    commands::analytics::init_analytics();
+    
 
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
@@ -118,33 +108,6 @@ pub fn run() {
         .plugin(tauri_plugin_deep_link::init())
         .plugin(tauri_plugin_dialog::init())
         .setup(|_app| {
-            // Start the agent preview bridge (global loopback MCP server) at
-            // launch so it's listening before any agent session spawns —
-            // registrations from previous runs stay valid from second zero.
-            {
-                let handle = _app.handle().clone();
-                tauri::async_runtime::spawn(async move {
-                    if let Err(e) = agent_bridge::start_global_agent_bridge(handle).await {
-                        tracing::error!("[AgentBridge] Failed to start global bridge: {}", e);
-                    }
-                });
-            }
-
-            // Point the Android mirror bridge at the bundled scrcpy-server jar (its
-            // low-latency video source). If the resource is missing, the bridge
-            // falls back to a system scrcpy install, then to screenrecord.
-            {
-                use tauri::Manager;
-                if let Ok(jar) = _app
-                    .path()
-                    .resolve("scrcpy-server.jar", tauri::path::BaseDirectory::Resource)
-                {
-                    if jar.is_file() {
-                        commands::mobile::set_bundled_scrcpy_jar(jar);
-                    }
-                }
-            }
-
             // Build the main window programmatically so we can attach an
             // initialization script that runs in all frames (including the
             // cross-origin preview iframe). Config here mirrors what used to
@@ -299,11 +262,6 @@ pub fn run() {
                     tracing::info!("Killed {} PTY processes for window {}", killed, label);
                 }
 
-                // Tear down this window's mobile previews (serve-sim daemon, app
-                // build, and any sim we booted). Runs for EVERY closing window,
-                // not just main — a non-main project window must not leak its sim.
-                commands::mobile::teardown_mobile_previews_for_window_sync(&label);
-
                 // Clean up project window registry
                 state::unregister_window_by_label(&label);
 
@@ -326,46 +284,11 @@ pub fn run() {
                     commands::setup::cleanup_auth_processes_sync();
                     proxy::stop_all_proxies();
                     static_server::stop_all_static_servers();
-                    // Mobile previews are torn down per-window above
-                    // (teardown_mobile_previews_for_window_sync), so there's no
-                    // global sim shutdown to do here.
-                }
-
-                // The agent bridge serves EVERY window (one global MCP server),
-                // so it must outlive the main window: project windows still
-                // need their preview tools after main closes.
-                if remaining_windows == 0 {
-                    agent_bridge::stop_all_agent_bridges();
                 }
             }
         })
         .invoke_handler(tauri::generate_handler![
-            // Git & Prerequisites
-            commands::git::check_prerequisites,
-            commands::git::get_qalem_dir,
-            commands::git::ensure_qalem_dir,
-            commands::git::init_git_repo,
-            commands::git::check_git_has_changes,
-            commands::git::get_changed_files,
-            commands::git::get_file_diff,
-            commands::git::get_branch_status,
-            commands::git::reset_to_branch,
-            commands::git::list_branches,
-            commands::git::get_current_branch,
-            commands::git::switch_branch,
-            commands::git::get_stash_info,
-            commands::git::apply_stash,
-            commands::git::drop_stash,
-            commands::git::stash_changes,
-            commands::git::discard_changes,
-            commands::git::commit_changes,
-            commands::git::create_branch,
-            commands::git::fetch_all_branches,
-            commands::git::git_pull,
-            commands::git::pull_and_merge,
-            commands::git::delete_branch,
-            commands::git::get_backups,
-            commands::git::restore_backup,
+        
             // Projects
             commands::projects::list_projects,
             commands::projects::get_dashboard_projects,
@@ -490,12 +413,6 @@ pub fn run() {
             commands::ide::crop_and_save_screenshot,
             commands::ide::compare_screenshots,
             commands::ide::stitch_screenshots,
-            // Analytics
-            commands::analytics::track_event,
-            commands::analytics::identify_user,
-            commands::analytics::get_analytics_enabled,
-            commands::analytics::set_analytics_enabled,
-            commands::analytics::get_device_id_command,
             // Settings
             commands::settings::get_calendar_hidden,
             commands::settings::set_calendar_hidden,
@@ -532,95 +449,16 @@ pub fn run() {
             commands::settings::pick_projects_root,
             commands::projects::list_movable_projects,
             commands::projects::move_projects_to_root,
-            // AI generation
-            commands::ai::generate_pr_description,
-            commands::ai::generate_commit_message,
-            // Claude integration
-            commands::claude::check_claude_cli_status,
-            commands::claude::install_claude_cli,
-            commands::claude::claude_session_exists,
-            // Shopify theme integration
-            commands::shopify::check_shopify_cli_status,
-            commands::shopify::get_shopify_store,
-            commands::shopify::set_shopify_store,
-            commands::shopify::kill_stale_theme_dev,
-            // Claude skills
-            commands::skills::list_claude_skills,
-            commands::skills::check_skills_cli,
-            commands::skills::search_skills,
-            commands::skills::install_skill,
-            commands::skills::remove_skill,
-            // MCP servers
-            commands::mcp::list_mcp_servers,
-            commands::mcp::add_mcp_server,
-            commands::mcp::remove_mcp_server,
-            // Plugins
-            commands::plugins::list_plugins,
-            commands::plugins::install_plugin,
-            commands::plugins::uninstall_plugin,
-            commands::plugins::update_plugin,
-            commands::plugins::check_plugin_update,
-            commands::plugins::read_plugin_bundle,
-            commands::plugins::read_plugin_manifest,
-            commands::plugins::toggle_plugin,
-            commands::plugins::exec_plugin_shell,
-            commands::plugins::read_plugin_storage,
-            commands::plugins::write_plugin_storage,
-            commands::plugins::link_dev_plugin,
-            commands::plugins::unlink_dev_plugin,
-            // GitHub integration
-            commands::github::check_github_cli_status,
-            commands::github::get_github_username,
-            commands::github::get_github_orgs,
-            commands::github::get_project_github_status,
-            commands::github::push_to_github,
-            commands::github::list_github_repos,
-            commands::github::list_collaborator_repos,
-            commands::github::detect_package_manager,
-            // Publishing
-            commands::publishing::publish_to_github,
-            commands::publishing::publish_to_staging,
-            commands::publishing::publish_to_production,
-            commands::publishing::publish_branch,
-            // Pull requests
-            commands::pull_requests::list_pull_requests,
-            commands::pull_requests::create_pull_request,
-            commands::pull_requests::merge_pull_request,
-            commands::pull_requests::checkout_pull_request,
-            commands::pull_requests::close_pull_request,
-            // Merge conflict resolution
-            commands::conflicts::get_conflict_info,
-            commands::conflicts::resolve_conflict,
-            commands::conflicts::abort_merge,
-            commands::conflicts::complete_merge,
             // Preview Proxy
             commands::proxy::start_preview_proxy,
             commands::proxy::stop_preview_proxy,
             // Static File Server
             commands::static_server::start_static_server,
             commands::static_server::stop_static_server,
-            // Agent Preview Bridge (MCP server for the workspace agent)
-            commands::agent_bridge::get_agent_bridge_url,
-            commands::agent_bridge::get_agent_bridge_active_url,
-            commands::agent_bridge::register_cursor_mcp,
-            commands::agent_bridge::agent_bridge_attach,
-            commands::agent_bridge::agent_bridge_respond,
             // Project Type Detection
             commands::projects::detect_project_type_command,
             commands::projects::project_path_exists,
-            // Native Mobile Preview (iOS Simulator via serve-sim)
-            commands::mobile::list_booted_simulators,
-            commands::mobile::start_mobile_preview,
-            commands::mobile::get_simulator_launch_command,
-            commands::mobile::simulator_app_running,
-            commands::mobile::hide_simulator,
-            commands::mobile::list_android_devices,
-            commands::mobile::android_app_running,
-            commands::mobile::detect_mobile_targets,
-            commands::mobile::mobile_platform_support,
-            commands::mobile::set_mobile_launch_status,
             // PTY & Terminal
-            commands::pty::spawn_pty,
             commands::pty::kill_pty,
             commands::pty::kill_window_pty,
             commands::pty::kill_all_pty,
@@ -636,14 +474,6 @@ pub fn run() {
             commands::pty::unregister_external_pty,
             commands::pty::kill_project_pty,
             commands::pty::get_project_pty_pids,
-            // Backend-owned PTY sessions (phase 3)
-            commands::pty_session::pty_session_open,
-            commands::pty_session::pty_session_write,
-            commands::pty_session::pty_session_resize,
-            commands::pty_session::pty_session_kill,
-            commands::pty_session::pty_session_attach,
-            commands::pty_session::pty_session_detach,
-            commands::pty_session::pty_session_list,
             // Community Templates
             commands::templates::fetch_community_templates,
             commands::templates::download_template_zip,
@@ -722,12 +552,6 @@ pub fn run() {
             // Logging
             logging::get_log_path,
             logging::log_frontend_event,
-            // Snapshots / Undo-Redo
-            commands::snapshots::snapshot_start_watching,
-            commands::snapshots::snapshot_stop_watching,
-            commands::snapshots::snapshot_status,
-            commands::snapshots::snapshot_undo,
-            commands::snapshots::snapshot_redo,
             // Window / Compact Mode
             commands::window::enter_compact_mode,
             commands::window::exit_compact_mode,

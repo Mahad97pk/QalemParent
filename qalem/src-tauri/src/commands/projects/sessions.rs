@@ -113,10 +113,6 @@ pub async fn suspend_project_session(project_path: String) -> Result<u32, Comman
 /// Returns the number of PTYs killed.
 pub async fn suspend_session_internal(project_path: &str) -> u32 {
     let killed = kill_project_pty_internal(project_path);
-    // Suspending frees the project's resources — the mobile preview (serve-sim
-    // daemon + app-build pty_session) lives in registries the PTY sweep above
-    // doesn't reach, so tear it down explicitly here too.
-    crate::commands::mobile::teardown_mobile_preview(project_path.to_string()).await;
     mark_session_suspended(project_path);
     tracing::info!(
         "Suspended session: project={}, killed_ptys={}",
@@ -141,8 +137,6 @@ pub async fn suspend_session_internal(project_path: &str) -> u32 {
 #[tracing::instrument]
 pub async fn unregister_project_session(project_path: String) -> Result<(), CommandError> {
     state_unregister_session(&project_path);
-    // Closing the project tears down its mobile preview (backend-owned session).
-    crate::commands::mobile::teardown_mobile_preview(project_path.clone()).await;
     tracing::info!("Unregistered session: project={}", project_path,);
     Ok(())
 }

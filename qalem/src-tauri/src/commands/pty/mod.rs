@@ -12,11 +12,8 @@ pub use stream::*;
 use crate::errors::CommandError;
 use crate::utils::{create_command, get_extended_path};
 use std::collections::HashMap;
-use std::sync::atomic::AtomicU32;
 use std::sync::{LazyLock, Mutex};
 
-/// Counter for generating unique PTY IDs
-pub(super) static PTY_ID_COUNTER: AtomicU32 = AtomicU32::new(1);
 
 /// Information about a spawned PTY process
 pub(super) struct PtyInfo {
